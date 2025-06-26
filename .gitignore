@@ -15,6 +15,10 @@ ENV/
 .venv/
 env.bak/
 
+models/
+*.vec
+*.txt
+
 
 # Environment variables
 .env
