@@ -1,0 +1,121 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore large word embeddings
+models/GloVe/*.txt
+models/FastText/*.vec
+
+
+# Virtual environment
+menv/
+venv/
+ENV/
+.venv/
+env.bak/
+
+
+# Environment variables
+.env
+*.env
+
+# macOS junk
+.DS_Store
+
+# VS Code settings (optional)
+.vscode/
+
+# Python test cache
+.pytest_cache/
+.tox/
+coverage.xml
+*.cover
+htmlcov/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Logs and temp files
+*.log
+*.tmp
+
+# FastAPI auto-generated files
+instance/
+*.sqlite3
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+
+# Reports
+reports/
+
+# Misc
+*.bak
+
+# Individual files
+cleaning.py
+collect.py
+collect2.py
+
+
+# 🧠 Python
+__pycache__/
+*.py[cod]
+*.ipynb_checkpoints
+
+# 📦 Virtual Environments
+venv/
+env/
+menv/
+.menv/
+*.egg-info/
+
+# 🗂️ Data & Model Files (Large or private)
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.json
+*.h5
+*.joblib
+*.pkl
+*.npy
+*.npz
+*.vec
+*.txt
+
+# Include only if model files are huge or can be redownloaded
+models/
+data/
+
+# 📓 Jupyter Notebook Output
+*.nbconvert.ipynb
+
+# 🔍 Logs and Checkpoints
+*.log
+*.out
+*.tfevents.*
+logs/
+
+# 🧪 Test and debug files
+test/
+*.bak
+*.swp
+
+# 🧰 OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# 🔐 Secrets
+.env
+*.key
+*.pem
