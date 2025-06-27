@@ -15,9 +15,19 @@ ENV/
 .venv/
 env.bak/
 
-models/
-*.vec
-*.txt
+# Ignore large embeddings inside models/
+models/*.vec
+models/*.txt
+
+# Ignore only large files inside models/
+models/*.vec
+models/*.txt
+
+# Allow the folder itself and specific small files
+!models/
+!models/*.pkl
+!models/*.json
+
 
 
 # Environment variables
@@ -96,7 +106,7 @@ menv/
 *.txt
 
 # Include only if model files are huge or can be redownloaded
-models/
+
 data/
 
 # 📓 Jupyter Notebook Output

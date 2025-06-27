@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Monitoring Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" integrity="sha384-fNl9rj/LqD4aS+XFQd0Sb2QIb4+8+7+WjXm9+53h5Xl5z5rX5rX5rX5rX5rX5rX5rX5" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Mental Health Monitoring</h1>
+        </header>
+
+        <main>
+            <section class="prediction-section">
+                <form method="POST" action="{{ url_for('dashboard.dashboard') }}" aria-label="Mental health text analysis form">
+                    <label for="text-input" class="sr-only">Enter text to analyze</label>
+                    <textarea id="text-input" name="text" class="text-input" placeholder="Enter a message to analyze..." required aria-describedby="text-help"></textarea>
+                    <small id="text-help" class="help-text">Enter any text and we'll analyze it for mental health indicators</small>
+                    <button type="submit" class="predict-btn">Analyze Text</button>
+                </form>
+
+                <!-- CSV Upload Form -->
+                <form method="POST" action="{{ url_for('dashboard.dashboard') }}" enctype="multipart/form-data" style="margin-top: 2em;">
+                    <label for="csv-input" class="sr-only">Upload CSV for batch prediction</label>
+                    <input type="file" id="csv-input" name="file" accept=".csv" required />
+                    <button type="submit" class="predict-btn">Upload & Predict CSV</button>
+                    <small class="help-text">CSV must have a <b>text</b> column.</small>
+                </form>
+
+                {% if prediction %}
+                    <div class="result" role="region" aria-label="Prediction results">
+                        <h3>Predicted Mental Health Condition:</h3>
+                        <p class="prediction" aria-live="polite">{{ prediction }}</p>
+                    </div>
+                {% endif %}
+
+                {% if batch_results %}
+                    <div class="result" role="region" aria-label="Batch Prediction Results" style="margin-top:2em;">
+                        <h3>Batch Prediction Results</h3>
+                        <table border="1" cellpadding="6" style="width:100%;border-collapse:collapse;">
+                            <thead>
+                                <tr>
+                                    <th>Text</th>
+                                    <th>Predicted Condition</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for text, pred in batch_results %}
+                                <tr>
+                                    <td style="max-width:400px;overflow-x:auto;">{{ text }}</td>
+                                    <td>{{ pred }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </section>
+
+            {% if labels and counts %}
+            <section class="chart-section">
+                <div class="chart-container">
+                    <h3>Current Group-Level Mental Health Trend</h3>
+                    <canvas id="trendChart" role="img" aria-label="Bar chart showing mental health condition distribution"></canvas>
+                    <div id="chart-fallback" class="chart-fallback" style="display: none;">
+                        <p>Chart could not be loaded. Here's the data:</p>
+                        <ul>
+                            {% for label, count in label_count_pairs %}
+                                <li>{{ label }}: {{ count }} mentions</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+        </main>
+    </div>
+
+    {% if labels and counts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                var chartLabels = {{ labels | tojson | safe }};
+                var chartData = {{ counts | tojson | safe }};
+
+                if (!chartLabels || !chartData || chartLabels.length === 0 || chartData.length === 0) {
+                    throw new Error('Invalid chart data');
+                }
+
+                var ctx = document.getElementById('trendChart');
+                if (!ctx) {
+                    throw new Error('Chart canvas not found');
+                }
+
+                var chartContext = ctx.getContext('2d');
+                var trendChart = new Chart(chartContext, {
+                    type: 'bar',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{
+                            label: 'Number of Mentions',
+                            data: chartData,
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.6)',
+                                'rgba(54, 162, 235, 0.6)',
+                                'rgba(255, 205, 86, 0.6)',
+                                'rgba(75, 192, 192, 0.6)',
+                                'rgba(153, 102, 255, 0.6)',
+                                'rgba(255, 159, 64, 0.6)',
+                                'rgba(199, 199, 199, 0.6)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 205, 86, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)',
+                                'rgba(255, 159, 64, 1)',
+                                'rgba(199, 199, 199, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Mental Health Condition Distribution'
+                            },
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Mentions'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Mental Health Conditions'
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Chart initialization failed:', error);
+                var chartCanvas = document.getElementById('trendChart');
+                var fallback = document.getElementById('chart-fallback');
+                if (chartCanvas && fallback) {
+                    chartCanvas.style.display = 'none';
+                    fallback.style.display = 'block';
+                }
+            }
+        });
+    </script>
+    {% endif %}
+</body>
+</html>

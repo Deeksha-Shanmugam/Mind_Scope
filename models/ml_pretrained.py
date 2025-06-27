@@ -41,8 +41,8 @@ def load_glove_model(glove_file_path):
             embeddings_index[word] = vector
     return embeddings_index
 
-glove_model = load_glove_model("D:\mental-health-monitor\models\GloVe\glove.6B.100d.txt")
-embedding_dim = 100
+glove_model = load_glove_model("D:\mental-health-monitor\models\GloVe\glove.6B.300d.txt")
+embedding_dim = 300
 
 # -------------------- Average Word Embeddings --------------------
 def get_average_vector(text, embeddings_index, dim):
@@ -56,7 +56,7 @@ X_train_vec = np.vstack([get_average_vector(t, glove_model, embedding_dim) for t
 X_test_vec = np.vstack([get_average_vector(t, glove_model, embedding_dim) for t in tqdm(X_test, desc="Vectorizing Test")])
 
 # Assume tfidf_vecs = TF-IDF vectors (sparse), glove_vecs = GloVe average vectors (dense)
-tfidf = TfidfVectorizer(max_features=3000)
+tfidf = TfidfVectorizer(max_features=5000, ngram_range=(1,2))
 X_train_combined = hstack([tfidf.fit_transform(X_train), X_train_vec])
 X_test_combined = hstack([tfidf.transform(X_test), X_test_vec])
 
@@ -70,3 +70,15 @@ preds = clf.predict(X_test_combined)
 # -------------------- Evaluate --------------------
 print("\nAccuracy:", accuracy_score(y_test, preds))
 print("Classification Report:\n", classification_report(y_test, preds, target_names=le.classes_))
+
+import os
+import joblib
+
+# Ensure the 'models' directory exists
+os.makedirs("models", exist_ok=True)
+
+# Now save your artifacts
+joblib.dump(tfidf, "models/tfidf_vectorizer.pkl")
+joblib.dump(glove_model, "models/glove_embeddings.pkl")
+joblib.dump(clf, "models/final_model.pkl")
+joblib.dump(le, "models/label_encoder.pkl")

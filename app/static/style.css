@@ -1,0 +1,29 @@
+/* app/static/style.css */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f6fa;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 90%;
+    margin: 30px auto;
+    background: white;
+    padding: 20px 30px;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+
+h1 {
+    color: #2f3640;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+canvas {
+    margin: 20px auto;
+    display: block;
+    max-width: 100%;
+}

@@ -1,0 +1,1 @@
+# Placeholder for Pydantic or ORM models if needed 
