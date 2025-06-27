@@ -1,17 +1,7 @@
-from flask import Flask
-import os
-from app.routes.dashboard import dashboard_bp
+# main.py
+from app import create_app  # ✅ From app/__init__.py
 
-
-def create_app():
-    app = Flask(__name__, template_folder=os.path.join('app', 'templates'))
-
-    app.secret_key = os.environ.get('SECRET_KEY', 'fallback-secret-key-for-development')
-    # Register Blueprints
-    app.register_blueprint(dashboard_bp)
-
-    return app
+app = create_app()
 
 if __name__ == "__main__":
-    app = create_app()
     app.run(debug=True)

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mental Health Monitoring Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js" integrity="sha384-fNl9rj/LqD4aS+XFQd0Sb2QIb4+8+7+WjXm9+53h5Xl5z5rX5rX5rX5rX5rX5rX5rX5" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -15,6 +15,15 @@
 
         <main>
             <section class="prediction-section">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    <div class="flashes">
+                      {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                {% endwith %}
                 <form method="POST" action="{{ url_for('dashboard.dashboard') }}" aria-label="Mental health text analysis form">
                     <label for="text-input" class="sr-only">Enter text to analyze</label>
                     <textarea id="text-input" name="text" class="text-input" placeholder="Enter a message to analyze..." required aria-describedby="text-help"></textarea>
@@ -25,7 +34,7 @@
                 <!-- CSV Upload Form -->
                 <form method="POST" action="{{ url_for('dashboard.dashboard') }}" enctype="multipart/form-data" style="margin-top: 2em;">
                     <label for="csv-input" class="sr-only">Upload CSV for batch prediction</label>
-                    <input type="file" id="csv-input" name="file" accept=".csv" required />
+                    <input type="file" id="csv-input" name="file" accept=".csv" required>
                     <button type="submit" class="predict-btn">Upload & Predict CSV</button>
                     <small class="help-text">CSV must have a <b>text</b> column.</small>
                 </form>
@@ -58,6 +67,22 @@
                         </table>
                     </div>
                 {% endif %}
+
+                {% if recent_batches %}
+                    <div class="recent-batches" style="margin-top:2em;">
+                        <h3>Recent Batch Prediction Files</h3>
+                        <ul>
+                        {% for batch in recent_batches %}
+                            <li>
+                                Batch {{ batch.id }} ({{ batch.filename }}, {{ batch.total_predictions }} predictions, {{ batch.created_at.strftime('%Y-%m-%d %H:%M') }})
+                                <a href="{{ url_for('dashboard.download_batch', batch_id=batch.id) }}" class="predict-btn" style="margin-left:1em;">Download CSV</a>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <a href="{{ url_for('dashboard.download_all_single') }}" class="predict-btn" style="margin-top:1em;display:inline-block;">Download All Single Predictions</a>
             </section>
 
             {% if labels and counts %}
@@ -68,8 +93,8 @@
                     <div id="chart-fallback" class="chart-fallback" style="display: none;">
                         <p>Chart could not be loaded. Here's the data:</p>
                         <ul>
-                            {% for label, count in label_count_pairs %}
-                                <li>{{ label }}: {{ count }} mentions</li>
+                            {% for label in labels %}
+                                <li>{{ label }}: {{ counts[loop.index0] }} mentions</li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -80,14 +105,34 @@
     </div>
 
     {% if labels and counts %}
+    <!-- Embed data in hidden div instead of inline JavaScript -->
+    <div id="chart-data" style="display: none;" 
+         data-labels="{{ labels | tojson | e }}" 
+         data-counts="{{ counts | tojson | e }}"></div>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             try {
-                var chartLabels = {{ labels | tojson | safe }};
-                var chartData = {{ counts | tojson | safe }};
+                // Get data from data attributes
+                var chartDataElement = document.getElementById('chart-data');
+                if (!chartDataElement) {
+                    throw new Error('Chart data element not found');
+                }
+                
+                var chartLabels = JSON.parse(chartDataElement.getAttribute('data-labels'));
+                var chartData = JSON.parse(chartDataElement.getAttribute('data-counts'));
 
-                if (!chartLabels || !chartData || chartLabels.length === 0 || chartData.length === 0) {
-                    throw new Error('Invalid chart data');
+                // Validate that we have proper arrays
+                if (!Array.isArray(chartLabels) || !Array.isArray(chartData)) {
+                    throw new Error('Chart data is not in array format');
+                }
+
+                if (chartLabels.length === 0 || chartData.length === 0) {
+                    throw new Error('Chart data arrays are empty');
+                }
+
+                if (chartLabels.length !== chartData.length) {
+                    throw new Error('Chart labels and data arrays have different lengths');
                 }
 
                 var ctx = document.getElementById('trendChart');
@@ -155,6 +200,7 @@
                 });
             } catch (error) {
                 console.error('Chart initialization failed:', error);
+                
                 var chartCanvas = document.getElementById('trendChart');
                 var fallback = document.getElementById('chart-fallback');
                 if (chartCanvas && fallback) {
